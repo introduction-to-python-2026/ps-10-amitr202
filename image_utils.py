@@ -1,6 +1,8 @@
 from PIL import Image
 import numpy as np
 from scipy.signal import convolve2d
+import skimage.filters
+import skimage.morphology
 
 def load_image(path):
     """טעינת תמונה והמרתה למערך numpy בגווני אפור"""
@@ -8,14 +10,12 @@ def load_image(path):
     return np.array(img)
 
 def ball(radius):
-    """יצירת אלמנט מבני עבור פילטר חציון"""
-    from skimage.morphology import ball as sk_ball
-    return sk_ball(radius)
+    """יצירת אלמנט מבני (footprint) עבור הפילטר"""
+    return skimage.morphology.ball(radius)
 
 def median(image, footprint):
     """הפעלת פילטר חציון להפחתת רעשים"""
-    from skimage.filters.rank import median as sk_median
-    return sk_median(image, footprint)
+    return skimage.filters.median(image, footprint)
 
 def edge_detection(image):
     """זיהוי קצוות באמצעות אופרטור Sobel ונרמול ל-0-255"""
@@ -27,7 +27,7 @@ def edge_detection(image):
     Gx = convolve2d(image, Kx, mode='same', boundary='fill', fillvalue=0)
     Gy = convolve2d(image, Ky, mode='same', boundary='fill', fillvalue=0)
     
-    # חישוב עוצמת הקצוות
+    # חישוב עוצמת הקצוות (Magnitude)
     g_magnitude = np.sqrt(Gx**2 + Gy**2)
     
     # נרמול לטווח 0-255 - קריטי כדי לעבור את הסף (edge > 50)
