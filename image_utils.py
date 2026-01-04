@@ -1,7 +1,7 @@
 from PIL import Image
 import numpy as np
 from scipy.signal import convolve2d
-import skimage.filters.rank
+import skimage.filters
 import skimage.morphology
 
 def load_image(path):
@@ -9,22 +9,21 @@ def load_image(path):
     img = Image.open(path).convert('L')
     return np.array(img)
 
-# הטסט מחפש את הפונקציות האלו בדיוק בשמות האלו:
-def median(image, footprint):
-    """מפעיל פילטר חציון מהספריה skimage"""
-    return skimage.filters.rank.median(image, footprint)
-
 def ball(radius):
-    """יוצר אלמנט מבני (ball) מהספריה skimage"""
+    """יצירת אלמנט מבני עבור פילטר חציון"""
     return skimage.morphology.ball(radius)
 
+def median(image, footprint):
+    """הפעלת פילטר חציון להפחתת רעשים"""
+    return skimage.filters.median(image, footprint)
+
 def edge_detection(image):
-    """זיהוי קצוות באמצעות Sobel ונרמול ל-0-255"""
+    """זיהוי קצוות באמצעות אופרטור Sobel ונרמול"""
     # הגדרת מטריצות Sobel
     Kx = np.array([[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]])
     Ky = np.array([[1, 2, 1], [0, 0, 0], [-1, -2, -1]])
     
-    # חישוב קונבולוציה
+    # חישוב קונבולוציה (שינויים אופקיים ואנכיים)
     Gx = convolve2d(image, Kx, mode='same', boundary='fill', fillvalue=0)
     Gy = convolve2d(image, Ky, mode='same', boundary='fill', fillvalue=0)
     
