@@ -4,17 +4,16 @@ from scipy.signal import convolve2d
 
 def load_image(path):
     """
-    טעינת תמונה מהנתיב והמרתה למערך numpy בגווני אפור.
+    טעינת תמונה והמרתה למערך numpy בגווני אפור
     """
-    img = Image.open(path).convert('L') # 'L' ממיר ישירות לגווני אפור
+    img = Image.open(path).convert('L')
     return np.array(img)
 
 def edge_detection(image):
     """
-    זיהוי קצוות באמצעות אופרטור Sobel ופעולת קונבולוציה.
+    זיהוי קצוות באמצעות אופרטור Sobel
     """
-    # הגדרת קרנלים של Sobel לציר X ולציר Y
-    # אלו מטריצות שמזהות שינויים בחדות (נגזרות)
+    # הגדרת מטריצות Sobel לזיהוי שינויים בציר X ובציר Y
     Kx = np.array([[-1, 0, 1], 
                    [-2, 0, 2], 
                    [-1, 0, 1]])
@@ -23,14 +22,15 @@ def edge_detection(image):
                    [ 0,  0,  0], 
                    [-1, -2, -1]])
 
-    # ביצוע קונבולוציה למציאת שינויים אופקיים ואנכיים
+    # ביצוע קונבולוציה
     Gx = convolve2d(image, Kx, mode='same', boundary='fill', fillvalue=0)
     Gy = convolve2d(image, Ky, mode='same', boundary='fill', fillvalue=0)
 
-    # חישוב עוצמת הגרדיאנט (שילוב של שני הצירים)
-    # $G = \sqrt{Gx^2 + Gy^2}$
+    # חישוב עוצמת הקצוות (מגניטודה)
     g_magnitude = np.sqrt(Gx**2 + Gy**2)
 
-    # נרמול הערכים לטווח של 0-255 והמרה ל-uint8
-    g_magnitude = (g_magnitude / g_magnitude.max()) * 255
+    # נרמול הערכים לטווח 0-255 כדי שנוכל להציג כתמונה
+    if g_magnitude.max() > 0:
+        g_magnitude = (g_magnitude / g_magnitude.max()) * 255
+        
     return g_magnitude.astype(np.uint8)
