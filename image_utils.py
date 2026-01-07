@@ -1,32 +1,48 @@
-from PIL import Image
 import numpy as np
+from PIL import Image
 from scipy.signal import convolve2d
-import skimage.filters
-import skimage.morphology
 
 def load_image(path):
-    # טעינה והמרה למערך float כדי למנוע שגיאות עיגול
-    return np.array(Image.open(path).convert('L')).astype(float)
-
-def ball(radius):
-    return skimage.morphology.ball(radius)
-
-def median(image, footprint):
-    # שימוש ב-uint8 עבור פילטר החציון כפי ש-skimage דורשת
-    return skimage.filters.median(image.astype(np.uint8), footprint)
+    """
+    Loads an image from a file path and converts it to a NumPy array.
+    """
+    # פתיחת התמונה באמצעות PIL
+    img = Image.open(path)
+    # המרה למערך NumPy והחזרה
+    return np.array(img)
 
 def edge_detection(image):
-    # מטריצות Sobel
-    Kx = np.array([[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]])
-    Ky = np.array([[1, 2, 1], [0, 0, 0], [-1, -2, -1]])
+    """
+    Performs edge detection using Sobel filters.
+    """
+    # 1. Convert to Grayscale
+    # המרה לגווני אפור על ידי ממוצע של שלושת ערוצי הצבע (R, G, B)
+    # image shape is usually (Height, Width, 3) -> we calculate mean on axis 2
+    gray_image = np.mean(image, axis=2)
+
+    # 2. Define Sobel Kernels (Based on lecture slide 61)
+    # זיהוי שינויים אנכיים (קצוות אופקיים)
+    kernelY = np.array([
+        [1, 2, 1],
+        [0, 0, 0],
+        [-1, -2, -1]
+    ])
     
-    # קונבולוציה מדויקת
-    Gx = convolve2d(image, Kx, mode='same', boundary='symm')
-    Gy = convolve2d(image, Ky, mode='same', boundary='symm')
-    
-    # חישוב עוצמה ונרמול
-    mag = np.sqrt(Gx**2 + Gy**2)
-    if mag.max() > 0:
-        mag = (mag / mag.max()) * 255
-        
-    return mag.astype(np.uint8)
+    # זיהוי שינויים אופקיים (קצוות אנכיים)
+    kernelX = np.array([
+        [-1, 0, 1],
+        [-2, 0, 2],
+        [-1, 0, 1]
+    ])
+
+    # 3. Apply Convolution (Based on lecture slides 20-25, 38-42)
+    # mode='same' מבטיח שהפלט יהיה באותו גודל כמו הקלט
+    # boundary='fill' ו-fillvalue=0 מטפלים בקצוות התמונה (Padding)
+    edgeX = convolve2d(gray_image, kernelX, mode='same', boundary='fill', fillvalue=0)
+    edgeY = convolve2d(gray_image, kernelY, mode='same', boundary='fill', fillvalue=0)
+
+    # 4. Compute Magnitude (Based on lecture slide 59)
+    # שילוב שני הכיוונים לקבלת עוצמת הקצה הכללית
+    edgeMAG = np.sqrt(edgeX**2 + edgeY**2)
+
+    return edgeMAG
